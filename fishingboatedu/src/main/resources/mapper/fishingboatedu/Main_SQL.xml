@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="main">
+
+	<!-- (중개인) 페이지 평가 insert -->
+	<insert id="insertEval" parameterType="hashmap">
+		<![CDATA[
+			INSERT INTO 
+				TB_CONTENT_EVAL 
+				(
+					SEQ, 
+					PAGE, 
+					REG_DATE, 
+					SCORE, 
+					USR_ID
+				)
+			VALUES 
+				(
+					(
+						SELECT 
+							NVL(MAX(SEQ),0) + 1 
+						FROM
+							TB_CONTENT_EVAL
+					),
+					#{page},
+					SYSDATE,
+					#{evalchk},
+					#{evalid}
+				)
+		]]>
+	</insert>
+	
+	<!-- (중개인) 페이지 로그 입력 -->
+	<insert id="insertPageStats" parameterType="hashmap">
+		<![CDATA[
+			INSERT INTO 
+				TB_PAGELOG_T 
+				(
+					SEQ, 
+					REG_DAT, 
+					USR_IP, 
+					PAGE, 
+					USR_ID
+				)
+			VALUES 
+				(
+					(
+						SELECT 
+							NVL(MAX(SEQ),0) + 1 
+						FROM
+							TB_PAGELOG_T
+					),
+					SYSDATE,
+					#{usr_ip},
+					#{page},
+					#{usr_id}
+				)
+		]]>
+	</insert>
+
+</mapper>
+
