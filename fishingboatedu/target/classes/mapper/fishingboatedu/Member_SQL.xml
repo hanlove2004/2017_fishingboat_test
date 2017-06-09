@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="member">
+
+	<!-- (중개인) 로그인 -->
+	<select id="selectLogin" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT
+				SEQ,
+				EDU_SEQ,
+				EDU_NUM,
+				EDU_INFOR_SEQ,
+				EDU_IMG_URL,
+				EDU_IMG_ORG_NAM,
+				EDU_IMG_SAV_NAM,
+				EDU_NAM,
+				EDU_BIRTH,
+				EDU_EMAIL,
+				EDU_PHONE,
+				EDU_POST_CD,
+				EDU_ADDR1,
+				EDU_ADDR2,
+				EDU_DOM_YN,
+				EDU_BROKE_APP_YN,
+				TO_CHAR(EDU_REG_DAT, 'YYYY-MM-DD') AS EDU_REG_DAT,
+				EDU_APP_STATE
+			FROM
+				TB_EDU_APPLICATION_T
+			WHERE
+				EDU_NUM = #{usrid}
+				AND EDU_PWD = #{usrpw}
+				AND EDU_APP_STATE != 's3'
+		]]>
+	</select>
+	
+	<!-- (중개인) 아이디 중복 확인 -->
+	<select id="selectIdCheck" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT 
+				COUNT(*) AS RESULT
+			FROM 
+				TB_USR_BROKE_T A
+			WHERE 
+				A.USR_ID = #{usrid}
+		]]>
+	</select>
+	
+	<!-- (중개인) 회원가입 -->
+	<insert id="insertJoin" parameterType="hashmap">
+		<![CDATA[
+			INSERT INTO 
+				TB_USR_BROKE_T 
+				(
+					USR_ID, 
+					PW, 
+					NAM, 
+					USR_EMAIL, 
+					REG_DAT, 
+					ISADMIN, 
+					PHONE
+				)
+			VALUES 
+				(
+					#{usrid}, 
+					#{usrpw}, 
+					#{name}, 
+					#{emailtrue}, 
+					SYSDATE, 
+					'N', 
+					#{phonetrue}
+				)
+		]]>
+	</insert>
+	
+	<!-- (중개인) 아이디찾기 -->
+	<select id="selectBrokeUsrIdSearch" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT
+				A.USR_ID,
+				A.PW,
+				A.NAM,
+				A.USR_EMAIL,
+				TO_CHAR(A.REG_DAT, 'yyyy-mm-dd') AS REG_DAT,
+				A.ISADMIN,
+				A.PHONE
+			FROM 
+				TB_USR_BROKE_T A
+			WHERE 
+				A.NAM = #{nam}
+				AND A.USR_EMAIL = #{email}
+		]]>
+	</select>
+	
+	<!-- (중개인) 비밀번호찾기 -->
+	<select id="selectBrokeUsrPwSearch" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT 
+				A.USR_ID,
+				A.PW,
+				A.NAM,
+				A.USR_EMAIL,
+				TO_CHAR(A.REG_DAT, 'yyyy-mm-dd') AS REG_DAT,
+				A.ISADMIN,
+				A.PHONE
+			FROM 
+				TB_USR_BROKE_T A
+			WHERE 
+				A.NAM = #{nam}
+				AND A.USR_ID = #{usid}
+				AND A.USR_EMAIL = #{email}
+		]]>
+	</select>
+	
+	<!-- (중개인) 비밀번호찾기 (임시비밀번호로 정보 update) -->
+	<update id="updateBroMemberPw" parameterType="hashmap">
+		<![CDATA[
+			UPDATE 
+				TB_USR_BROKE_T 
+			SET
+				PW = #{tmpr_pw}
+			WHERE 
+				NAM = #{nam}
+				AND USR_ID = #{usid}
+				AND USR_EMAIL = #{email}
+		]]>
+	</update>
+	
+</mapper>
+

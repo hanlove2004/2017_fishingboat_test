@@ -1,0 +1,58 @@
+<%@ page pageEncoding="utf-8"%>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>어선중개인 교육지원</title>
+
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@ taglib prefix="ui" uri="http://egovframework.gov/ctl/ui" %>
+
+<link rel="stylesheet" type="text/css" href="<c:url value='/css/ui.css'/>" />
+<link rel="stylesheet" type="text/css" href="<c:url value='/css/common.css'/>" />
+<script src="<c:url value='/js/common.js'/>" charset="utf-8"></script>
+
+<!-- jQuery -->
+<script src="<c:url value='/js/jquery.min.js'/>" charset="utf-8"></script>
+<script src="<c:url value='/js/jquery-ui.min.js'/>" charset="utf-8"></script>
+<link rel="stylesheet" type="text/css" href="<c:url value='/css/jquery-ui.css'/>" />
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<script src="http://dmaps.daum.net/map_js_init/postcode.v2.js"></script>
+
+<!-- favicon 적용 -->
+<link rel="shortcut icon" href="<c:url value='/favicon.ico' />" type="image/x-icon" />
+<link rel="icon" href="<c:url value='/favicon.ico' />" type="image/x-icon" />
+
+<script type="text/javascript">
+	// 페이지 로그 입력
+	function fn_pageLog(){
+		$.ajax({
+			url : "<c:url value='/main/insertPageStats.do' />",
+			type : "POST",
+			data : {
+				"usr_ip" : "<%= request.getRemoteAddr()%>",
+				"page" : "${page}",
+				"usr_id" : "${mberInfo.USR_ID}"
+			},
+			async : false,
+			success : function(data, status) {
+				if (data != null || data != undefined) {
+					console.log("************* pagelog_success ***************");
+					return;
+				} else {
+					console.log("************* pagelog_fail ******************");
+				}
+			},
+			error: function(e){
+				alert(e.responseText);
+			}
+		});
+	}
+</script>
