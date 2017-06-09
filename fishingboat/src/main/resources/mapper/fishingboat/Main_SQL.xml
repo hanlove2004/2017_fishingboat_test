@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="main">
+
+	<!-- 페이지 평가 insert -->
+	<insert id="insertEval" parameterType="hashmap">
+		<![CDATA[
+			INSERT INTO 
+				TB_CONTENT_EVAL 
+				(
+					SEQ, 
+					PAGE, 
+					REG_DATE, 
+					SCORE, 
+					USR_ID
+				)
+			VALUES 
+				(
+					(
+						SELECT 
+							NVL(MAX(SEQ),0) + 1 
+						FROM
+							TB_CONTENT_EVAL
+					),
+					#{page},
+					SYSDATE,
+					#{evalchk},
+					#{evalid}
+				)
+		]]>
+	</insert>
+	
+	<!-- 페이지 로그 입력 -->
+	<insert id="insertPageStats" parameterType="hashmap">
+		<![CDATA[
+			INSERT INTO 
+				TB_PAGELOG_T 
+				(
+					SEQ, 
+					REG_DAT, 
+					USR_IP, 
+					PAGE, 
+					USR_ID
+				)
+			VALUES 
+				(
+					(
+						SELECT 
+							NVL(MAX(SEQ),0) + 1 
+						FROM
+							TB_PAGELOG_T
+					),
+					SYSDATE,
+					#{usr_ip},
+					#{page},
+					#{usr_id}
+				)
+		]]>
+	</insert>
+
+	<!-- 어선현황(매물,매도,매수) -->
+	<select id="selectShipTotal" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT
+				(
+					SELECT
+						COUNT(*)
+					FROM 
+						(
+							SELECT 
+								*
+							FROM
+								(
+								SELECT 
+									AA.*,
+									BB.*,
+									ROW_NUMBER() OVER(ORDER BY REG_DAT) AS ROWSNUM,
+									ROW_NUMBER() OVER(ORDER BY REG_DAT DESC) AS ROWS_NUM,
+									COUNT(SEQ) OVER() AS CNT
+								FROM
+									(
+										(
+											SELECT 
+												D.SEQ, 
+												D.USR_ID, 
+												C.BOARD_SEQ, 
+												D.HANG_NAME, 
+												D.TON, 
+												D.CODE_CTN, 
+												D.HOPE_PRICE, 
+												D.REG_DAT,
+												C.BROKE_ID, 
+												C.BROTYPE, 
+												C.SHIP_NO, 
+												D.SHP_NM, 
+												E.SAV_FLE_NAM  
+											FROM 
+												(
+													SELECT 
+														* 
+													FROM 
+														TB_BROKE_YN 
+													WHERE 
+														BROKE_CHK = 'Y'
+												) C,
+												(
+													SELECT 
+														* 
+													FROM
+														(
+															SELECT 
+																* 
+															FROM 
+																TB_FISHINGBOAT_SELL
+														) A,
+														(
+															SELECT 
+																* 
+															FROM 
+																VI_SHIP
+														) B
+													WHERE 
+														A.SHIP_NO = B.SHIP_NO
+												) D,
+												(
+													SELECT 
+														MIN(SEQ) SEQ, 
+														MIN(SAV_FLE_NAM) SAV_FLE_NAM, 
+														MIN(BOARD_SEQ) BOARD_SEQ 
+													FROM 
+														TB_FISHINGBOAT_SELL_PIC 
+													GROUP BY 
+														BOARD_SEQ
+												) E
+											WHERE 
+												C.BOARD_SEQ = D.SEQ
+												AND C.BOARD_SEQ = E.BOARD_SEQ(+)
+										)
+										UNION ALL
+										(
+											SELECT 
+												F.SEQ, 
+												F.USR_ID, 
+												E.BOARD_SEQ, 
+												F.REL_TRANS_CGG_CODE AS SHIP_SGG, 
+												F.SHIP_TOT_TONS, 
+												F.FS_MET_CODE, 
+												F.HOPE_PRICE, 
+												F.REG_DAT,
+												E.BROKE_ID, 
+												E.BROTYPE, 
+												E.SHIP_NO, 
+												E.SHIP_NO AS SHP_NM, 
+												'SAV_FLE_NAM' SAV_FLE_NAM 
+											FROM
+												(
+													SELECT 
+														* 
+													FROM 
+														TB_BROKE_YN 
+													WHERE 
+														BROKE_CHK = 'Y'
+												) E,
+												(
+													SELECT 
+														* 
+													FROM 
+														TB_FISHINGBOAT_BUY
+												) F
+											WHERE 
+												E.BOARD_SEQ = F.SEQ
+										)
+									) AA,
+									TB_JOB_CODE_T BB
+							WHERE 
+								AA.CODE_CTN = BB.JOBVALUE
+						) AAA
+					WHERE 
+						1 = 1
+					) 
+				) AS DEAL_COUNT,
+				(
+					SELECT
+						COUNT(*)
+					FROM
+						(
+							SELECT
+								ROW_NUMBER() OVER(ORDER BY B.SEQ) AS RNUM,
+								ROW_NUMBER() OVER(ORDER BY B.SEQ DESC) AS ROWS_NUM,
+								A.USR_ID,
+								A.PW,
+								A.NAM,
+								A.USR_EMAIL,
+								A.REG_DAT AS USR_REG_DAT, 
+								A.ISADMIN, 
+								B.SEQ, 
+								B.SHIP_CODE, 
+								B.STATUS_CODE, 
+								B.HOPE_PRICE, 
+								TO_CHAR(B.REG_DAT, 'yyyy/mm/dd') AS REG_DAT,
+								B.SHIP_NO,
+								C.CODE_CTN AS FS_MET_CODE,
+								C.BRE AS SHIP_BRE,
+								C.DPH AS SHIP_DPH,
+								C.LEN AS SHIP_LEN,
+								C.HANG_NAME AS SHIP_SGG,
+								C.TON AS SHIP_TOT_TONS,
+								C.SHP_NM,
+								D.BROKE_YN,
+								E.SAV_FLE_NAM AS SELLPIC,
+								D.YNCNT
+							FROM 
+								TB_USR_T A, 
+								TB_FISHINGBOAT_SELL B,
+								VI_SHIP C,
+								(
+									SELECT 
+										BOARD_SEQ, 
+										BROKE_YN, 
+										COUNT(BROKE_YN) YNCNT 
+									FROM 
+										TB_BROKE_YN 
+									WHERE 
+										BROTYPE='sell' 
+										AND BROKE_YN='Y' 
+									GROUP BY 
+										BOARD_SEQ, 
+										BROKE_YN
+								) D,
+								(
+									SELECT 
+										MIN(SEQ) SEQ, 
+										MIN(SAV_FLE_NAM) SAV_FLE_NAM, 
+										MIN(BOARD_SEQ) BOARD_SEQ 
+									FROM 
+										TB_FISHINGBOAT_SELL_PIC 
+									GROUP BY 
+										BOARD_SEQ
+								) E
+							WHERE 
+								A.USR_ID = B.USR_ID
+								AND B.SHIP_NO = C.SHIP_NO
+								AND B.SEQ = D.BOARD_SEQ(+)
+								AND B.SEQ = E.BOARD_SEQ(+)
+						) SELL
+					WHERE
+						1 = 1
+				) AS SELL_COUNT,
+				(
+					SELECT
+						COUNT(*)
+					FROM
+						(
+							SELECT
+								ROW_NUMBER() OVER(ORDER BY B.SEQ) AS RNUM,
+								ROW_NUMBER() OVER(ORDER BY B.SEQ DESC) AS ROWS_NUM,
+								A.USR_ID, 
+								A.PW, 
+								A.NAM, 
+								A.USR_EMAIL, 
+								A.REG_DAT AS USR_REG_DAT, 
+								A.ISADMIN, 
+								B.SEQ, 
+								B.SHIP_CODE, 
+								B.STATUS_CODE, 
+								B.HOPE_PRICE, 
+								TO_CHAR(B.REG_DAT, 'yyyy/mm/dd') AS REG_DAT,
+								B.FS_MET_CODE,
+								B.REL_TRANS_CGG_CODE,
+								B.SHIP_TOT_TONS,
+								C.BROKE_YN,
+								C.YNCNT
+							FROM 
+								TB_USR_T A,
+								TB_FISHINGBOAT_BUY B,
+								(
+									SELECT 
+										BOARD_SEQ, 
+										BROKE_YN, 
+										COUNT(BROKE_YN) YNCNT 
+									FROM 
+										TB_BROKE_YN 
+									WHERE 
+										BROTYPE = 'buy' 
+										AND BROKE_YN='Y' 
+									GROUP BY 
+										BOARD_SEQ, 
+										BROKE_YN
+								) C
+							WHERE 
+								A.USR_ID = B.USR_ID
+								AND B.SEQ = C.BOARD_SEQ(+)
+						)
+				) AS BUY_COUNT
+			FROM
+				DUAL
+		]]>
+	</select>
+	
+	<!-- 메인 공지사항 목록 -->
+	<select id="selectNoticeList" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT
+				ROW_NUMBER() OVER (ORDER BY SEQ DESC) RNUM,
+				SEQ,
+				TITLE,
+				CONTENT,
+				ISSUSE,
+				TO_CHAR(REG_DAT, 'YYYY/MM/DD') AS REG_DAT,
+				HIT_CNT,
+				USR_ID
+			FROM
+				TB_INFOR_T
+			WHERE
+				ISSUSE = 'Y'
+		]]>
+	</select>
+	
+	<!-- 매물현황 목록 -->
+	<select id="selectDealList" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT 
+				ROW_NUMBER() OVER(ORDER BY SEQ) AS RNUM1,
+				ROW_NUMBER() OVER(ORDER BY SEQ DESC) AS ROWS_NUM1,
+				USR_ID,
+				SEQ,
+				HOPE_PRICE,
+				TO_CHAR(REG_DAT, 'YYYY-MM-DD') AS REG_DAT,
+				CODE_CTN,
+				HANG_NAME AS TITLE,
+				TON,
+				BROTYPE,
+				SHIP_NO,
+				ROWSNUM AS RNUM,
+				ROWS_NUM,
+				CNT,
+				SHP_NM, 
+				JOBKEY, 
+				BROKE_ID, 
+				SAV_FLE_NAM AS SELLPIC
+			FROM
+				(
+					SELECT 
+						AA.*,
+						BB.*,
+						ROW_NUMBER() OVER(ORDER BY REG_DAT) AS ROWSNUM,
+						ROW_NUMBER() OVER(ORDER BY REG_DAT DESC) AS ROWS_NUM,
+						COUNT(SEQ) OVER() AS CNT
+					FROM
+						(
+							(
+								SELECT 
+									D.SEQ, 
+									D.USR_ID, 
+									C.BOARD_SEQ, 
+									D.HANG_NAME, 
+									D.TON, 
+									D.CODE_CTN, 
+									D.HOPE_PRICE, 
+									D.REG_DAT,
+									C.BROKE_ID, 
+									C.BROTYPE, 
+									C.SHIP_NO, 
+									D.SHP_NM, 
+									E.SAV_FLE_NAM  
+								FROM 
+									(
+										SELECT 
+											* 
+										FROM 
+											TB_BROKE_YN 
+										WHERE 
+											BROKE_CHK = 'Y'
+									) C,
+									(
+										SELECT 
+											* 
+										FROM
+											(
+												SELECT 
+													* 
+												FROM 
+													TB_FISHINGBOAT_SELL
+											) A,
+											(
+												SELECT 
+													* 
+												FROM 
+													VI_SHIP
+											) B
+										WHERE 
+											A.SHIP_NO = B.SHIP_NO
+									) D,
+									(
+										SELECT 
+											MIN(SEQ) SEQ, 
+											MIN(SAV_FLE_NAM) SAV_FLE_NAM, 
+											MIN(BOARD_SEQ) BOARD_SEQ 
+										FROM 
+											TB_FISHINGBOAT_SELL_PIC 
+										GROUP BY 
+											BOARD_SEQ
+									) E
+								WHERE 
+									C.BOARD_SEQ = D.SEQ
+									AND C.BOARD_SEQ = E.BOARD_SEQ(+)
+							)
+						UNION ALL
+							(
+								SELECT 
+									F.SEQ, 
+									F.USR_ID, 
+									E.BOARD_SEQ, 
+									F.REL_TRANS_CGG_CODE AS SHIP_SGG, 
+									F.SHIP_TOT_TONS, 
+									F.FS_MET_CODE, 
+									F.HOPE_PRICE, 
+									F.REG_DAT,
+									E.BROKE_ID, 
+									E.BROTYPE, 
+									E.SHIP_NO, 
+									E.SHIP_NO AS SHP_NM, 
+									'SAV_FLE_NAM' SAV_FLE_NAM 
+								FROM
+									(
+										SELECT 
+											* 
+										FROM 
+											TB_BROKE_YN 
+										WHERE 
+											BROKE_CHK = 'Y'
+									) E,
+									(
+										SELECT 
+											* 
+										FROM 
+											TB_FISHINGBOAT_BUY
+									) F
+								WHERE 
+									E.BOARD_SEQ = F.SEQ
+							)
+						) AA,
+						TB_JOB_CODE_T BB
+					WHERE 
+						AA.CODE_CTN = BB.JOBVALUE
+				) AAA
+			WHERE 
+				1 = 1
+		]]>
+	</select>
+	
+	<!-- 팝업 목록 -->
+	<select id="selectPopupList" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT 
+				ROWNUM AS RNUM,
+				A.SEQ,
+				A.TITLE,
+				A.URL,
+				A.IMG_URL,
+				A.ISUSE,
+				A.REG_DAT,
+				A.SAV_FLE_NAM
+			FROM 
+				TB_POPZONE_T A
+			WHERE 
+				A.ISUSE = 'Y'
+		]]>
+	</select>
+	
+	<!-- 어선매도 목록 (메인화면 매물정보 LIST) -->
+	<select id="selectSellList" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT
+				ROW_NUMBER() OVER(ORDER BY B.SEQ) AS ROWS_NUM,
+				ROW_NUMBER() OVER(ORDER BY B.SEQ desc) AS RNUM,
+				A.USR_ID,
+				A.PW,
+				A.NAM,
+				A.USR_EMAIL,
+				A.REG_DAT AS USR_REG_DAT, 
+				A.ISADMIN, 
+				B.SEQ, 
+				B.SHIP_CODE, 
+				B.STATUS_CODE, 
+				B.HOPE_PRICE, 
+				TO_CHAR(B.REG_DAT, 'yyyy/mm/dd') AS REG_DAT,
+				B.SHIP_NO,
+				C.CODE_CTN AS FS_MET_CODE,
+				C.BRE AS SHIP_BRE,
+				C.DPH AS SHIP_DPH,
+				C.LEN AS SHIP_LEN,
+				C.HANG_NAME AS SHIP_SGG,
+				C.TON AS SHIP_TOT_TONS,
+				C.SHP_NM,
+				D.BROKE_YN,
+				E.SAV_FLE_NAM as SELLPIC,
+				D.YNCNT
+			FROM 
+				TB_USR_T A, 
+				TB_FISHINGBOAT_SELL B,
+				VI_SHIP C,
+				(
+					SELECT 
+						BOARD_SEQ, 
+						BROKE_YN, 
+						COUNT(BROKE_YN) YNCNT 
+					FROM 
+						TB_BROKE_YN 
+					WHERE 
+						BROTYPE='sell' 
+						AND BROKE_YN='Y' 
+					GROUP BY 
+						BOARD_SEQ, 
+						BROKE_YN
+				) D,
+				(
+					SELECT 
+						MIN(SEQ) SEQ, 
+						MIN(SAV_FLE_NAM) SAV_FLE_NAM, 
+						MIN(BOARD_SEQ) BOARD_SEQ 
+					FROM 
+						TB_FISHINGBOAT_SELL_PIC 
+					GROUP BY 
+						BOARD_SEQ
+				) E
+			WHERE 
+				A.USR_ID = B.USR_ID
+				AND B.SHIP_NO = C.SHIP_NO
+				AND B.SEQ = D.BOARD_SEQ(+)
+				AND B.SEQ = E.BOARD_SEQ(+)
+		]]>
+	</select>
+
+</mapper>
+

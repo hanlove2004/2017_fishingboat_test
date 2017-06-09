@@ -1,0 +1,46 @@
+@CHARSET "utf-8";
+* {margin:0;padding:0;} 
+html, body {margin:0; padding:0;}
+body	{min-height:100%; margin:0;padding:0;font:12px '나눔고딕', NanumGothic, '돋움', Dotum, Tahoma, sans-serif, Verdana;}
+li, ul, div, h1, h3, p, span	{margin:0;padding:0;}
+ul	{list-style:none;}
+fieldset, img	{border:none; padding:0; margin:0; vertical-align:top;}
+legend, {position: absolute;left: -2000%;}
+header, nav, section, article, footer {display:block;}
+a {color:#373737;text-decoration:none;cursor:hand;}
+a:hover {color:#373737;}
+img a {cursor:hand !important;} 
+table {border-collapse:collapse;}	 
+.round {-moz-border-radius:10px;border-radius:10px;-webkit-border-radius:10px;-khtml-border-radius:10px;}
+.clear {clear:both;}
+.hidden {visibility:hidden; position:absolute; left:0; top:0;width:0; height:0; margin:0; padding:0; overflow:hidden; line-height:0; font-size:0;}  
+.bold {font-weight:bold;}
+
+/*폰트*/ 
+@import url('http://fonts.googleapis.com/earlyaccess/nanumgothic.css');  
+/*subject*/
+h2{font-size:20px;}
+/*layout*/	
+#wrap{width:100%;min-width:1024px;}
+#header{width:978px;margin:0 auto;}
+#header .links{float:right; margin:17px 0;}
+#header .links a{/*margin-left:25px;*/font:bold 12px '돋움', Dotum;}
+#nav{width:100%;border-bottom:1px solid #ccc;}
+#header .logo{display:block;top:44px;width: 205px;padding:0 0 30px; margin: 0 auto;z-index: 1;}
+#header .logo::before, 
+#nav::before, 
+#section::before, 
+#section01::before, 
+#section02::before, 
+#section03::before {content:"";display:block;clear:both;}
+/*FOOTER*/
+#footer {clear:both; width:100%; min-height:80px; padding-top:44px; font-family:'돋움',dotum; font-size:11px;}
+#footer .fbox {float:right;}
+#footer .fmenu01{position:relative; float:left; margin-left:5px;width:138px;height:28px;background:#efefef url(../images/common/select_arrow.gif) 120px center no-repeat;}
+#footer .fmenu01 label {position: absolute;font-family:'돋움',dotum;font-size: 11px;color:#333;top: 9px;left: 12px;}
+#footer .fmenu01 select {width:100%;height:28px;min-height:28px;line-height:28px;padding:0 10px;opacity:0;filter: alpha(opacity=0); /* IE 8 */}
+#footer .address {color:#878787;}
+#footer .copyright {clear:both;width:698px;}
+#footer .copyright .logo_copy {float:left; width:230px; height:40px; background:url(../images/common/logo_copy.gif) no-repeat;}
+#footer .copyright .address	{float:left;line-height:1.5em; text-align:left;}
+

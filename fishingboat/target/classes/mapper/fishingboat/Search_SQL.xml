@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="search">
+
+	<!-- 검색 목록 -->
+	<select id="selectSearchList" parameterType="hashmap" resultType="hashmap">
+		<include refid="common.pagingPre"/>
+			SELECT 
+				AA.RULE,
+				AA.SEQ,
+				AA.TITLE,
+				TO_CHAR(AA.REG_DAT, 'YYYY-MM-DD') AS REG_DAT,
+				AA.ROWSNUM,
+				AA.ROWS_NUM AS RNUM,
+				AA.CNT
+			FROM
+				(
+					SELECT 
+						a.*,
+						ROW_NUMBER() OVER(ORDER BY REG_DAT) AS ROWSNUM,
+						ROW_NUMBER() OVER(ORDER BY REG_DAT DESC) AS ROWS_NUM,
+						COUNT(TITLE) OVER() AS CNT
+					FROM 
+						(
+							SELECT 
+								'NOTICE' AS RULE,
+								SEQ,
+								TITLE,
+								CONTENT,
+								REG_DAT 
+							FROM 
+								TB_INFOR_T
+							UNION
+							SELECT 
+								'FREE' AS RULE,
+								SEQ, 
+								TITLE, 
+								CONTENT, 
+								REG_DAT 
+							FROM 
+								TB_FREE_T
+							UNION
+							SELECT 
+								'DATA' AS RULE,
+								SEQ, 
+								TITLE, 
+								CONTENT, 
+								REG_DAT 
+							FROM 
+								TB_FILEBOARD_T
+							UNION
+							SELECT 
+								'RULE' AS RULE,
+								SEQ, 
+								TITLE, 
+								CONTENT, 
+								REG_DAT 
+							FROM 
+								TB_RULE_T
+							UNION
+							SELECT 
+								'QNA' AS RULE,
+								SEQ, 
+								TITLE, 
+								CONTENT, 
+								REG_DAT 
+							FROM 
+								TB_QA_T
+						) A
+					WHERE 
+						1 = 1
+					<if test="keyword != null and keyword != ''">
+						<choose>
+							<when test="search_type == 'title'">
+								AND A.TITLE LIKE '%' || #{keyword} || '%'
+							</when>
+							<when test="search_type == 'content'">
+								AND A.CONTENT LIKE '%' || #{keyword} || '%'
+							</when>
+							<otherwise>
+								AND A.TITLE LIKE '%' || #{keyword} || '%'
+								OR A.CONTENT LIKE '%' || #{keyword} || '%'
+							</otherwise>
+						</choose>
+					</if>
+				) AA
+			WHERE 
+				1 = 1
+		<include refid="common.pagingPost"/>
+	</select>
+	
+</mapper>
+

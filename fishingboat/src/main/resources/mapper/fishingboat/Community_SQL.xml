@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="community">
+
+	<!-- 공지사항 목록 -->
+	<select id="selectNoticeList" parameterType="hashmap" resultType="hashmap">
+		<include refid="common.pagingPre"/>
+			<![CDATA[
+				SELECT
+					ROW_NUMBER() OVER (ORDER BY SEQ DESC) RNUM,
+					SEQ,
+					TITLE,
+					CONTENT,
+					ISSUSE,
+					TO_CHAR(REG_DAT, 'yyyy/mm/dd') AS REG_DAT,
+					HIT_CNT,
+					USR_ID
+				FROM
+					TB_INFOR_T
+				WHERE
+					ISSUSE = 'Y'
+			]]>
+		<include refid="common.pagingPost"/>
+	</select>
+	
+	<!-- 공지사항 상세보기 -->
+	<select id="selectNoticeDetail" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT
+				A.SEQ,
+				A.TITLE,
+				A.CONTENT,
+				A.ISSUSE,
+				TO_CHAR(A.REG_DAT, 'YYYY-MM-DD') AS REG_DAT,
+				A.HIT_CNT,
+				A.USR_ID,
+				NVL(B.NAM, '관리자') AS NAM
+			FROM 
+				TB_INFOR_T A,
+				TB_USR_T B
+			WHERE
+				A.SEQ = #{seq}
+				AND A.USR_ID = B.USR_ID(+)
+		]]>
+	</select>
+	
+	<!-- 공지사항 상세보기 시 조회수 증가 -->
+	<update id="updateNoticeHitCnt" parameterType="hashmap">
+		UPDATE 
+			TB_INFOR_T 
+		SET
+			HIT_CNT = HIT_CNT + 1
+		WHERE 
+			SEQ = #{seq}
+	</update>
+	
+	<!-- 자료실 목록 -->
+	<select id="selectDataList" parameterType="hashmap" resultType="hashmap">
+		<include refid="common.pagingPre"/>
+			<![CDATA[
+				SELECT
+					ROW_NUMBER() OVER (ORDER BY SEQ DESC) RNUM,
+					SEQ,
+					TITLE,
+					CONTENT,
+					ISSUSE,
+					TO_CHAR(REG_DAT, 'YYYY-MM-DD') AS REG_DAT,
+					HIT_CNT,
+					USR_ID
+				FROM
+					TB_FILEBOARD_T
+				WHERE
+					ISSUSE = 'Y'
+			]]>
+		<include refid="common.pagingPost"/>
+	</select>
+	
+	<!-- 자료실 상세보기 -->
+	<select id="selectDataDetail" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT
+				A.SEQ,
+				A.TITLE,
+				A.CONTENT,
+				A.ISSUSE,
+				A.REG_DAT,
+				A.HIT_CNT,
+				A.USR_ID,
+				B.ORG_FLE_NAM,
+				B.SAV_FLE_NAM,
+				B.SEQ AS FILE_SEQ,
+				NVL(C.NAM, '관리자') AS NAM
+			FROM 
+				TB_FILEBOARD_T A,
+				(
+					SELECT 
+						* 
+					FROM 
+						TB_FILE_T 
+					WHERE 
+						BOARD_TYPE='adminfileboard'
+				) B,
+				TB_USR_T C
+			WHERE 
+				A.SEQ = #{seq}
+				AND A.SEQ = B.BOARD_SEQ(+)
+				AND A.USR_ID = C.USR_ID(+)
+		]]>
+	</select>
+	
+	<!-- 자료실 상세보기 시 조회수 증가 -->
+	<update id="updateDataHitCnt" parameterType="hashmap">
+		UPDATE 
+			TB_FILEBOARD_T 
+		SET
+			HIT_CNT = HIT_CNT + 1
+		WHERE 
+			SEQ = #{seq}
+	</update>
+	
+	<!-- 자유게시판 목록 -->
+	<select id="selectFreeList" parameterType="hashmap" resultType="hashmap">
+		<include refid="common.pagingPre"/>
+			<![CDATA[
+				SELECT
+					ROW_NUMBER() OVER (ORDER BY A.SEQ DESC) RNUM,
+					A.SEQ,
+					A.TITLE,
+					A.CONTENT,
+					A.ISSUSE,
+					TO_CHAR(A.REG_DAT, 'YYYY-MM-DD') AS REG_DAT,
+					A.HIT_CNT,
+					A.USR_ID,
+					NVL(B.NAM,'관리자') AS NAM
+				FROM
+					TB_FREE_T A,
+					TB_USR_T B
+				WHERE
+					A.ISSUSE = 'Y'
+					AND A.USR_ID = B.USR_ID(+)
+			]]>
+		<include refid="common.pagingPost"/>
+	</select>
+	
+	<!-- 자유게시판 insert -->
+	<insert id="insertFree" parameterType="hashmap">
+		<![CDATA[
+			INSERT INTO 
+				TB_FREE_T 
+				(
+					SEQ, 
+					TITLE, 
+					CONTENT, 
+					ISSUSE, 
+					REG_DAT, 
+					HIT_CNT, 
+					USR_ID
+				)
+			VALUES 
+				(
+					(
+						SELECT 
+							NVL(MAX(seq),0) + 1 
+						FROM
+							TB_FREE_T
+					),
+					#{title},
+					#{content},
+					'Y',
+					SYSDATE,
+					'1',
+					#{usrid}
+				)
+		]]>
+	</insert>
+	
+	<!-- 자유게시판 상세보기 -->
+	<select id="selectFreeDetail" parameterType="hashmap" resultType="hashmap">
+		<![CDATA[
+			SELECT
+				A.SEQ,
+				A.TITLE,
+				A.CONTENT,
+				A.ISSUSE,
+				TO_CHAR(A.REG_DAT, 'YYYY-MM-DD') AS REG_DAT,
+				A.HIT_CNT,
+				A.USR_ID,
+				NVL(B.NAM, '관리자') AS NAM
+			FROM 
+				TB_FREE_T A,
+				TB_USR_T B
+			WHERE
+				A.SEQ = #{seq}
+				AND A.USR_ID = B.USR_ID(+)
+		]]>
+	</select>
+	
+	<!-- 자유게시판 상세보기 시 조회수 증가 -->
+	<update id="updateFreeHitCnt" parameterType="hashmap">
+		UPDATE 
+			TB_FREE_T 
+		SET
+			HIT_CNT = HIT_CNT + 1
+		WHERE 
+			SEQ = #{seq}
+	</update>
+	
+	<!-- 자유게시판 update -->
+	<update id="updateFree" parameterType="hashmap">
+		<![CDATA[
+			UPDATE 
+				TB_FREE_T 
+			SET
+				TITLE = #{title},
+				CONTENT = #{content}
+			WHERE 
+				SEQ = #{seq}
+		]]>
+	</update>
+	
+</mapper>
+
